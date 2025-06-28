@@ -156,6 +156,12 @@ A string which can be:
 
   > The mime type prefix for base64 is required (e.g. data:image/png;base64).
 
+- Content URI (Android):
+
+  ```js
+  const contentUri = 'content://media/external/images/media/123'
+  ```
+
 #### `Config?`
 
 The config object is optional.

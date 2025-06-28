@@ -125,7 +125,20 @@ class ImageColorsModule : Module() {
             image = BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
           }
 
-          if (URLUtil.isValidUrl(uri)) {
+          // check if content URI
+          if (uri.startsWith("content://")) {
+            try {
+              val contentUri = android.net.Uri.parse(uri)
+              context?.contentResolver?.openInputStream(contentUri)?.use { inputStream ->
+                image = BitmapFactory.decodeStream(inputStream)
+              }
+            } catch (e: Exception) {
+              Log.e("[ImageColors]", "Failed to decode content URI: ${e.message}")
+            }
+          }
+
+          // check if valid URL (http/https)
+          if (image == null && URLUtil.isValidUrl(uri)) {
             val parsedUri = URI(uri)
             val connection = parsedUri.toURL().openConnection()
 
@@ -139,13 +152,14 @@ class ImageColorsModule : Module() {
           }
 
           if (image == null) {
-            throw Exception("Filed to get image")
+            throw Exception("Failed to get image")
           }
 
-          val paletteBuilder = Palette.Builder(image)
+          val finalImage = image!!
+          val paletteBuilder = Palette.Builder(finalImage)
           val result: MutableMap<String, String> = mutableMapOf()
 
-          result["average"] = getHex(calculateAverageColor(image, config.pixelSpacing))
+          result["average"] = getHex(calculateAverageColor(finalImage, config.pixelSpacing))
           result["platform"] = "android"
 
           try {

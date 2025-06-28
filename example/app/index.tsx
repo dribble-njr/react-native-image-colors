@@ -3,8 +3,9 @@ import { Image, SafeAreaView, StyleSheet, Text, View } from 'react-native'
 import { getColors } from 'react-native-image-colors'
 
 const yunaUrl = 'https://i.imgur.com/68jyjZT.jpg'
-const catUrl = 'https://i.imgur.com/O3XSdU7.jpg'
-const catImg = require('./assets/cat.jpg')
+// const catUrl = 'https://i.imgur.com/O3XSdU7.jpg'
+// const catImg = require('./assets/cat.jpg')
+// const albumartUrl = 'content://media/external/audio/media/1000013206/albumart'
 
 const initialState = {
   colorOne: { value: '', name: '' },
@@ -20,33 +21,36 @@ export default function Page() {
 
   useEffect(() => {
     const fetchColors = async () => {
-      const result = await getColors(yunaUrl, {
-        fallback: '#000000',
-        pixelSpacing: 5,
-      })
-
-      switch (result.platform) {
-        case 'android':
-        case 'web':
-          setColors({
-            colorOne: { value: result.lightVibrant, name: 'lightVibrant' },
-            colorTwo: { value: result.dominant, name: 'dominant' },
-            colorThree: { value: result.vibrant, name: 'vibrant' },
-            colorFour: { value: result.darkVibrant, name: 'darkVibrant' },
-            rawResult: JSON.stringify(result),
-          })
-          break
-        case 'ios':
-          setColors({
-            colorOne: { value: result.background, name: 'background' },
-            colorTwo: { value: result.detail, name: 'detail' },
-            colorThree: { value: result.primary, name: 'primary' },
-            colorFour: { value: result.secondary, name: 'secondary' },
-            rawResult: JSON.stringify(result),
-          })
-          break
-        default:
-          throw new Error('Unexpected platform')
+      try {
+        const result = await getColors(yunaUrl, {
+          fallback: '#000000',
+          pixelSpacing: 5,
+        })
+        switch (result.platform) {
+          case 'android':
+          case 'web':
+            setColors({
+              colorOne: { value: result.lightVibrant, name: 'lightVibrant' },
+              colorTwo: { value: result.dominant, name: 'dominant' },
+              colorThree: { value: result.vibrant, name: 'vibrant' },
+              colorFour: { value: result.darkVibrant, name: 'darkVibrant' },
+              rawResult: JSON.stringify(result),
+            })
+            break
+          case 'ios':
+            setColors({
+              colorOne: { value: result.background, name: 'background' },
+              colorTwo: { value: result.detail, name: 'detail' },
+              colorThree: { value: result.primary, name: 'primary' },
+              colorFour: { value: result.secondary, name: 'secondary' },
+              rawResult: JSON.stringify(result),
+            })
+            break
+          default:
+            throw new Error('Unexpected platform')
+        }
+      } catch (error) {
+        console.error(error)
       }
 
       setLoading(false)
