@@ -1,11 +1,20 @@
+import * as DocumentPicker from 'expo-document-picker'
 import React, { useEffect, useState } from 'react'
-import { Image, SafeAreaView, StyleSheet, Text, View } from 'react-native'
+import {
+  Button,
+  Image,
+  Platform,
+  SafeAreaView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native'
 import { getColors } from 'react-native-image-colors'
 
 const yunaUrl = 'https://i.imgur.com/68jyjZT.jpg'
 // const catUrl = 'https://i.imgur.com/O3XSdU7.jpg'
 // const catImg = require('./assets/cat.jpg')
-// const albumartUrl = 'content://media/external/audio/media/1000013206/albumart'
 
 const initialState = {
   colorOne: { value: '', name: '' },
@@ -16,13 +25,14 @@ const initialState = {
 }
 
 export default function Page() {
+  const [imageUrl, setImageUrl] = useState(yunaUrl)
   const [colors, setColors] = useState(initialState)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const fetchColors = async () => {
       try {
-        const result = await getColors(yunaUrl, {
+        const result = await getColors(imageUrl, {
           fallback: '#000000',
           pixelSpacing: 5,
         })
@@ -57,7 +67,16 @@ export default function Page() {
     }
 
     fetchColors()
-  }, [])
+  }, [imageUrl])
+
+  const getContentFile = async () => {
+    const res = await DocumentPicker.getDocumentAsync({
+      type: 'image/*',
+      copyToCacheDirectory: false, // 关键：不要拷贝，否则就是 file://
+    })
+    if (res.canceled) return
+    setImageUrl(res.assets?.[0].uri || '')
+  }
 
   if (loading) {
     return (
@@ -69,14 +88,25 @@ export default function Page() {
 
   return (
     <View style={styles.container}>
+      <StatusBar barStyle="dark-content" />
+
       <SafeAreaView style={styles.resultContainer}>
+        {Platform.OS === 'android' && (
+          <Button
+            title="Get Content File"
+            onPress={() => {
+              getContentFile()
+            }}
+          />
+        )}
+
         <Text style={styles.loading}>Result:</Text>
         <Text style={styles.result}>{colors.rawResult}</Text>
       </SafeAreaView>
       <Image
         resizeMode="contain"
         style={styles.image}
-        source={{ uri: yunaUrl }}
+        source={{ uri: imageUrl }}
       />
       <View style={styles.row}>
         <Box name={colors.colorOne.name} value={colors.colorOne.value} />
