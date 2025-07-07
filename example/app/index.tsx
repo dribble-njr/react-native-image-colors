@@ -29,53 +29,50 @@ export default function Page() {
   const [colors, setColors] = useState(initialState)
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    const fetchColors = async () => {
-      try {
-        const result = await getColors(imageUrl, {
-          fallback: '#000000',
-          pixelSpacing: 5,
+  const fetchColors = async (imageUrl: string) => {
+    const result = await getColors(imageUrl, {
+      fallback: '#000000',
+      pixelSpacing: 5,
+    })
+    switch (result.platform) {
+      case 'android':
+      case 'web':
+        setColors({
+          colorOne: { value: result.lightVibrant, name: 'lightVibrant' },
+          colorTwo: { value: result.dominant, name: 'dominant' },
+          colorThree: { value: result.vibrant, name: 'vibrant' },
+          colorFour: { value: result.darkVibrant, name: 'darkVibrant' },
+          rawResult: JSON.stringify(result),
         })
-        switch (result.platform) {
-          case 'android':
-          case 'web':
-            setColors({
-              colorOne: { value: result.lightVibrant, name: 'lightVibrant' },
-              colorTwo: { value: result.dominant, name: 'dominant' },
-              colorThree: { value: result.vibrant, name: 'vibrant' },
-              colorFour: { value: result.darkVibrant, name: 'darkVibrant' },
-              rawResult: JSON.stringify(result),
-            })
-            break
-          case 'ios':
-            setColors({
-              colorOne: { value: result.background, name: 'background' },
-              colorTwo: { value: result.detail, name: 'detail' },
-              colorThree: { value: result.primary, name: 'primary' },
-              colorFour: { value: result.secondary, name: 'secondary' },
-              rawResult: JSON.stringify(result),
-            })
-            break
-          default:
-            throw new Error('Unexpected platform')
-        }
-      } catch (error) {
-        console.error(error)
-      }
-
-      setLoading(false)
+        break
+      case 'ios':
+        setColors({
+          colorOne: { value: result.background, name: 'background' },
+          colorTwo: { value: result.detail, name: 'detail' },
+          colorThree: { value: result.primary, name: 'primary' },
+          colorFour: { value: result.secondary, name: 'secondary' },
+          rawResult: JSON.stringify(result),
+        })
+        break
+      default:
+        throw new Error('Unexpected platform')
     }
 
-    fetchColors()
-  }, [imageUrl])
+    setLoading(false)
+  }
 
-  const getContentFile = async () => {
+  useEffect(() => {
+    fetchColors(imageUrl)
+  }, [])
+
+  const selectImage = async () => {
     const res = await DocumentPicker.getDocumentAsync({
       type: 'image/*',
-      copyToCacheDirectory: false, // 关键：不要拷贝，否则就是 file://
+      copyToCacheDirectory: false,
     })
     if (res.canceled) return
     setImageUrl(res.assets?.[0].uri || '')
+    fetchColors(res.assets?.[0].uri || '')
   }
 
   if (loading) {
@@ -93,9 +90,9 @@ export default function Page() {
       <SafeAreaView style={styles.resultContainer}>
         {Platform.OS === 'android' && (
           <Button
-            title="Get Content File"
+            title="Select Image"
             onPress={() => {
-              getContentFile()
+              selectImage()
             }}
           />
         )}
