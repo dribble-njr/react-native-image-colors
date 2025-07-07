@@ -127,13 +127,9 @@ class ImageColorsModule : Module() {
 
           // check if content URI
           if (uri.startsWith("content://")) {
-            try {
-              val contentUri = android.net.Uri.parse(uri)
-              context?.contentResolver?.openInputStream(contentUri)?.use { inputStream ->
-                image = BitmapFactory.decodeStream(inputStream)
-              }
-            } catch (e: Exception) {
-              Log.e("[ImageColors]", "Failed to decode content URI: ${e.message}")
+            val contentUri = android.net.Uri.parse(uri)
+            context?.contentResolver?.openInputStream(contentUri)?.use { inputStream ->
+              image = BitmapFactory.decodeStream(inputStream)
             }
           }
 
