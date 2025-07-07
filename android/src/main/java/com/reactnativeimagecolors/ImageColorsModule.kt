@@ -3,6 +3,7 @@ package com.reactnativeimagecolors
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Color
+import android.net.Uri
 import android.util.Base64
 import android.util.Log
 import android.webkit.URLUtil
@@ -79,11 +80,11 @@ class ImageColorsModule : Module() {
   }
 
   private fun parseFallbackColor(hex: String): String {
-    if(!hex.matches(Regex("^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$"))) {
+    if (!hex.matches(Regex("^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$"))) {
       throw Exception("Invalid fallback hex color. Must be in the format #ffffff or #fff")
     }
 
-    if(hex.length == 7) {
+    if (hex.length == 7) {
       return hex
     }
 
@@ -125,7 +126,16 @@ class ImageColorsModule : Module() {
             image = BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
           }
 
-          if (URLUtil.isValidUrl(uri)) {
+          // check if content URI
+          if (uri.startsWith("content")) {
+            val contentUri = Uri.parse(uri)
+            val stream = context?.contentResolver?.openInputStream(contentUri)
+            image = BitmapFactory.decodeStream(stream)
+            stream?.close()
+          }
+
+          // check if valid URL (http/https)
+          if (uri.startsWith("http")) {
             val parsedUri = URI(uri)
             val connection = parsedUri.toURL().openConnection()
 
@@ -135,11 +145,13 @@ class ImageColorsModule : Module() {
               }
             }
 
-            image = BitmapFactory.decodeStream(connection.getInputStream())
+            val stream = connection.getInputStream()
+            image = BitmapFactory.decodeStream(stream)
+            stream.close()
           }
 
           if (image == null) {
-            throw Exception("Filed to get image")
+            throw Exception("Failed to get image")
           }
 
           val paletteBuilder = Palette.Builder(image)

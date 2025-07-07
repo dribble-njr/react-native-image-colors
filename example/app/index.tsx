@@ -1,10 +1,20 @@
+import * as DocumentPicker from 'expo-document-picker'
 import React, { useEffect, useState } from 'react'
-import { Image, SafeAreaView, StyleSheet, Text, View } from 'react-native'
+import {
+  Button,
+  Image,
+  Platform,
+  SafeAreaView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native'
 import { getColors } from 'react-native-image-colors'
 
 const yunaUrl = 'https://i.imgur.com/68jyjZT.jpg'
-const catUrl = 'https://i.imgur.com/O3XSdU7.jpg'
-const catImg = require('./assets/cat.jpg')
+// const catUrl = 'https://i.imgur.com/O3XSdU7.jpg'
+// const catImg = require('../assets/cat.jpg')
 
 const initialState = {
   colorOne: { value: '', name: '' },
@@ -15,45 +25,55 @@ const initialState = {
 }
 
 export default function Page() {
+  const [imageUrl, setImageUrl] = useState(yunaUrl)
   const [colors, setColors] = useState(initialState)
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    const fetchColors = async () => {
-      const result = await getColors(yunaUrl, {
-        fallback: '#000000',
-        pixelSpacing: 5,
-      })
-
-      switch (result.platform) {
-        case 'android':
-        case 'web':
-          setColors({
-            colorOne: { value: result.lightVibrant, name: 'lightVibrant' },
-            colorTwo: { value: result.dominant, name: 'dominant' },
-            colorThree: { value: result.vibrant, name: 'vibrant' },
-            colorFour: { value: result.darkVibrant, name: 'darkVibrant' },
-            rawResult: JSON.stringify(result),
-          })
-          break
-        case 'ios':
-          setColors({
-            colorOne: { value: result.background, name: 'background' },
-            colorTwo: { value: result.detail, name: 'detail' },
-            colorThree: { value: result.primary, name: 'primary' },
-            colorFour: { value: result.secondary, name: 'secondary' },
-            rawResult: JSON.stringify(result),
-          })
-          break
-        default:
-          throw new Error('Unexpected platform')
-      }
-
-      setLoading(false)
+  const fetchColors = async (imageUrl: string) => {
+    const result = await getColors(imageUrl, {
+      fallback: '#000000',
+      pixelSpacing: 5,
+    })
+    switch (result.platform) {
+      case 'android':
+      case 'web':
+        setColors({
+          colorOne: { value: result.lightVibrant, name: 'lightVibrant' },
+          colorTwo: { value: result.dominant, name: 'dominant' },
+          colorThree: { value: result.vibrant, name: 'vibrant' },
+          colorFour: { value: result.darkVibrant, name: 'darkVibrant' },
+          rawResult: JSON.stringify(result),
+        })
+        break
+      case 'ios':
+        setColors({
+          colorOne: { value: result.background, name: 'background' },
+          colorTwo: { value: result.detail, name: 'detail' },
+          colorThree: { value: result.primary, name: 'primary' },
+          colorFour: { value: result.secondary, name: 'secondary' },
+          rawResult: JSON.stringify(result),
+        })
+        break
+      default:
+        throw new Error('Unexpected platform')
     }
 
-    fetchColors()
+    setLoading(false)
+  }
+
+  useEffect(() => {
+    fetchColors(imageUrl)
   }, [])
+
+  const selectImage = async () => {
+    const res = await DocumentPicker.getDocumentAsync({
+      type: 'image/*',
+      copyToCacheDirectory: false,
+    })
+    if (res.canceled) return
+    setImageUrl(res.assets?.[0].uri || '')
+    fetchColors(res.assets?.[0].uri || '')
+  }
 
   if (loading) {
     return (
@@ -65,14 +85,25 @@ export default function Page() {
 
   return (
     <View style={styles.container}>
+      <StatusBar barStyle="dark-content" />
+
       <SafeAreaView style={styles.resultContainer}>
+        {Platform.OS === 'android' && (
+          <Button
+            title="Select Image"
+            onPress={() => {
+              selectImage()
+            }}
+          />
+        )}
+
         <Text style={styles.loading}>Result:</Text>
         <Text style={styles.result}>{colors.rawResult}</Text>
       </SafeAreaView>
       <Image
         resizeMode="contain"
         style={styles.image}
-        source={{ uri: yunaUrl }}
+        source={{ uri: imageUrl }}
       />
       <View style={styles.row}>
         <Box name={colors.colorOne.name} value={colors.colorOne.value} />
