@@ -14,7 +14,7 @@ import { getColors } from 'react-native-image-colors'
 
 const yunaUrl = 'https://i.imgur.com/68jyjZT.jpg'
 // const catUrl = 'https://i.imgur.com/O3XSdU7.jpg'
-// const catImg = require('./assets/cat.jpg')
+// const catImg = require('../assets/cat.jpg')
 
 const initialState = {
   colorOne: { value: '', name: '' },
